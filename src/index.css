@@ -8,35 +8,56 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Medical/Healthcare Theme */
+    --background: 210 20% 98%;
+    --foreground: 215 25% 27%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 215 25% 27%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 215 25% 27%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Medical Blue Primary */
+    --primary: 210 100% 56%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 210 100% 85%;
+    --primary-dark: 210 100% 40%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Success Green for Health */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --success-light: 142 76% 85%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Warning Orange for Attention */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 38 92% 85%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Soft Medical Gray */
+    --secondary: 210 16% 93%;
+    --secondary-foreground: 215 25% 27%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --muted: 210 16% 93%;
+    --muted-foreground: 215 13% 54%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --accent: 210 100% 95%;
+    --accent-foreground: 210 100% 56%;
 
-    --radius: 0.5rem;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 89%;
+    --input: 210 20% 89%;
+    --ring: 210 100% 56%;
+
+    /* Medical Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-dark)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(142 76% 28%));
+    --gradient-bg: linear-gradient(180deg, hsl(var(--background)), hsl(210 20% 95%));
+
+    /* Large radius for accessibility */
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -101,5 +122,32 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    background: var(--gradient-bg);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* Large touch targets for accessibility */
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* High contrast focus states */
+  .focus-visible {
+    @apply ring-2 ring-primary ring-offset-2;
+  }
+
+  /* Medical form styles */
+  .medical-input {
+    @apply text-lg p-4 rounded-lg border-2 border-input focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all;
+  }
+
+  .medical-button {
+    @apply touch-target text-lg font-semibold rounded-lg transition-all duration-200 focus-visible;
+  }
+
+  .medical-card {
+    @apply bg-card rounded-xl shadow-lg border border-border p-6;
   }
 }
