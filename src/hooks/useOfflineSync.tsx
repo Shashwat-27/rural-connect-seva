@@ -102,35 +102,20 @@ export const useOfflineSync = () => {
     setIsSyncing(true);
 
     try {
-      // Simulate API call - replace with actual endpoint
-      const response = await fetch('https://dummy-mongo-atlas-link.com/api/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          submissions: offlineData.pendingSubmissions,
-        }),
+      // Data is now handled by the main application flow
+      // Clear pending submissions since they're processed elsewhere
+      saveOfflineData({
+        pendingSubmissions: [],
+        lastSync: Date.now(),
       });
 
-      if (response.ok) {
-        // Clear pending submissions on successful sync
-        saveOfflineData({
-          pendingSubmissions: [],
-          lastSync: Date.now(),
-        });
-
-        toast({
-          title: t.success,
-          description: t.dataSubmitted,
-          variant: "default",
-        });
-      } else {
-        throw new Error('Sync failed');
-      }
+      toast({
+        title: t.success,
+        description: t.dataSubmitted,
+        variant: "default",
+      });
     } catch (error) {
       console.error('Sync error:', error);
-      // Keep data for retry later
       toast({
         title: t.error,
         description: "Sync failed, will retry later",

@@ -14,7 +14,237 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      doctors: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          email: string | null
+          id: string
+          license_number: string | null
+          name: string
+          phone: string | null
+          specialization: string | null
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          name: string
+          phone?: string | null
+          specialization?: string | null
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          name?: string
+          phone?: string | null
+          specialization?: string | null
+        }
+        Relationships: []
+      }
+      medical_cases: {
+        Row: {
+          ai_recommendation: string | null
+          assessment_status: Database["public"]["Enums"]["case_status"]
+          blood_pressure_diastolic: number | null
+          blood_pressure_systolic: number | null
+          blood_sugar: number | null
+          created_at: string
+          doctor_id: string | null
+          doctor_notes: string | null
+          id: string
+          operator_id: string
+          oxygen_saturation: number | null
+          patient_id: string
+          prescribed_medicines: string[] | null
+          prescription: string | null
+          severity_score: number | null
+          sms_sent: boolean | null
+          status: Database["public"]["Enums"]["case_status"]
+          symptoms: string[] | null
+          temperature: number | null
+          updated_at: string
+          video_transcript: string | null
+          video_url: string | null
+        }
+        Insert: {
+          ai_recommendation?: string | null
+          assessment_status?: Database["public"]["Enums"]["case_status"]
+          blood_pressure_diastolic?: number | null
+          blood_pressure_systolic?: number | null
+          blood_sugar?: number | null
+          created_at?: string
+          doctor_id?: string | null
+          doctor_notes?: string | null
+          id?: string
+          operator_id: string
+          oxygen_saturation?: number | null
+          patient_id: string
+          prescribed_medicines?: string[] | null
+          prescription?: string | null
+          severity_score?: number | null
+          sms_sent?: boolean | null
+          status?: Database["public"]["Enums"]["case_status"]
+          symptoms?: string[] | null
+          temperature?: number | null
+          updated_at?: string
+          video_transcript?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          ai_recommendation?: string | null
+          assessment_status?: Database["public"]["Enums"]["case_status"]
+          blood_pressure_diastolic?: number | null
+          blood_pressure_systolic?: number | null
+          blood_sugar?: number | null
+          created_at?: string
+          doctor_id?: string | null
+          doctor_notes?: string | null
+          id?: string
+          operator_id?: string
+          oxygen_saturation?: number | null
+          patient_id?: string
+          prescribed_medicines?: string[] | null
+          prescription?: string | null
+          severity_score?: number | null
+          sms_sent?: boolean | null
+          status?: Database["public"]["Enums"]["case_status"]
+          symptoms?: string[] | null
+          temperature?: number | null
+          updated_at?: string
+          video_transcript?: string | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_cases_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medical_cases_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medical_cases_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operators: {
+        Row: {
+          created_at: string
+          id: string
+          location: string | null
+          name: string
+          operator_id: string
+          phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          name: string
+          operator_id: string
+          phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          name?: string
+          operator_id?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
+      patients: {
+        Row: {
+          address: string
+          age: number
+          created_at: string
+          gender: string
+          id: string
+          name: string
+          operator_id: string
+          phone: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          age: number
+          created_at?: string
+          gender: string
+          id?: string
+          name: string
+          operator_id: string
+          phone: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          age?: number
+          created_at?: string
+          gender?: string
+          id?: string
+          name?: string
+          operator_id?: string
+          phone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patients_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_auth: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_login: string | null
+          password_hash: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          password_hash: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_login?: string | null
+          password_hash?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +253,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      case_status:
+        | "pending"
+        | "simple"
+        | "moderate"
+        | "high"
+        | "prescribed"
+        | "completed"
+      user_role: "operator" | "doctor" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +387,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      case_status: [
+        "pending",
+        "simple",
+        "moderate",
+        "high",
+        "prescribed",
+        "completed",
+      ],
+      user_role: ["operator", "doctor", "admin"],
+    },
   },
 } as const

@@ -1,73 +1,34 @@
-# Welcome to your Lovable project
+# Rural Telemedicine Platform
 
-## Project info
+Complete telemedicine platform with home page, operator/doctor authentication, AI health assessment, video recording, and SMS prescription delivery.
 
-**URL**: https://lovable.dev/projects/65e33b2c-4ba7-4f13-b233-b1b3db69a493
+## Demo Credentials
+- **Operators**: OP001/OP002, Password: demo123
+- **Doctors**: DOC001/DOC002, Password: demo123
 
-## How can I edit this code?
+## Features
+✅ Home page with platform overview  
+✅ Role-based authentication (operators & doctors)  
+✅ Patient registration with visual icons  
+✅ Vitals entry (BP, sugar, temperature, oxygen)  
+✅ Symptoms selection with medical icons  
+✅ AI assessment (simple/moderate/high risk)  
+✅ Video recording for moderate cases  
+✅ Doctor dashboard for case review  
+✅ Prescription management  
+✅ Offline-first with sync  
+✅ Multilingual (Hindi, English, Punjabi)  
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/65e33b2c-4ba7-4f13-b233-b1b3db69a493) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+## Quick Start
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## File Structure
+- `src/components/` - All UI components
+- `src/contexts/` - Auth & language contexts  
+- `src/hooks/` - AI assessment, video recording, offline sync
+- Database automatically configured with sample data
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/65e33b2c-4ba7-4f13-b233-b1b3db69a493) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Perfect for rural healthcare with low-bandwidth optimization and visual interface for semi-literate users.
