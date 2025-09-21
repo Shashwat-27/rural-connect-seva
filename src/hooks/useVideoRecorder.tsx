@@ -5,6 +5,7 @@ export const useVideoRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
+  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -16,6 +17,8 @@ export const useVideoRecorder = () => {
       });
 
       streamRef.current = stream;
+      setPreviewStream(stream);
+      
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
 
@@ -30,6 +33,7 @@ export const useVideoRecorder = () => {
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'video/webm' });
         setVideoBlob(blob);
+        setPreviewStream(null);
         
         // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
@@ -57,14 +61,25 @@ export const useVideoRecorder = () => {
       setIsUploading(true);
       const fileName = `case_${caseId}_${Date.now()}.webm`;
       
-      // In a real app, you would create a storage bucket and upload here
-      // For demo purposes, we'll simulate upload and return a dummy URL
-      await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate upload delay
-      
-      const videoUrl = `https://storage.example.com/videos/${fileName}`;
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('medical-videos')
+        .upload(fileName, videoBlob, {
+          contentType: 'video/webm',
+          upsert: false
+        });
+
+      if (error) {
+        throw new Error(`Upload failed: ${error.message}`);
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('medical-videos')
+        .getPublicUrl(fileName);
       
       setIsUploading(false);
-      return videoUrl;
+      return publicUrl;
     } catch (error) {
       setIsUploading(false);
       console.error('Video upload failed:', error);
@@ -74,6 +89,7 @@ export const useVideoRecorder = () => {
 
   const resetRecording = () => {
     setVideoBlob(null);
+    setPreviewStream(null);
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
@@ -83,6 +99,7 @@ export const useVideoRecorder = () => {
     isRecording,
     isUploading,
     videoBlob,
+    previewStream,
     startRecording,
     stopRecording,
     uploadVideo,

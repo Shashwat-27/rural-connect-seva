@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useVideoRecorder } from '../hooks/useVideoRecorder';
 import { useLanguage } from '../contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
@@ -13,10 +13,18 @@ interface VideoRecordingComponentProps {
 
 export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = ({ onComplete, onBack }) => {
   const { t } = useLanguage();
-  const { isRecording, isUploading, videoBlob, startRecording, stopRecording, uploadVideo, resetRecording } = useVideoRecorder();
+  const { isRecording, isUploading, videoBlob, previewStream, startRecording, stopRecording, uploadVideo, resetRecording } = useVideoRecorder();
   const [recordingTime, setRecordingTime] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const previewRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Set up live preview when stream is available
+  useEffect(() => {
+    if (previewRef.current && previewStream) {
+      previewRef.current.srcObject = previewStream;
+    }
+  }, [previewStream]);
 
   const handleStartRecording = async () => {
     try {
@@ -124,6 +132,14 @@ export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = (
                   controls
                   className="w-full h-full rounded-lg"
                   src={URL.createObjectURL(videoBlob)}
+                />
+              ) : previewStream ? (
+                <video
+                  ref={previewRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  className="w-full h-full rounded-lg"
                 />
               ) : (
                 <div className="text-white text-center">
