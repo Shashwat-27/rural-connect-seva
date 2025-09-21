@@ -65,6 +65,8 @@ export type Database = {
           prescription: string | null
           severity_score: number | null
           sms_sent: boolean | null
+          sms_sent_at: string | null
+          sms_status: string | null
           status: Database["public"]["Enums"]["case_status"]
           symptoms: string[] | null
           temperature: number | null
@@ -89,6 +91,8 @@ export type Database = {
           prescription?: string | null
           severity_score?: number | null
           sms_sent?: boolean | null
+          sms_sent_at?: string | null
+          sms_status?: string | null
           status?: Database["public"]["Enums"]["case_status"]
           symptoms?: string[] | null
           temperature?: number | null
@@ -113,6 +117,8 @@ export type Database = {
           prescription?: string | null
           severity_score?: number | null
           sms_sent?: boolean | null
+          sms_sent_at?: string | null
+          sms_status?: string | null
           status?: Database["public"]["Enums"]["case_status"]
           symptoms?: string[] | null
           temperature?: number | null
@@ -214,6 +220,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prescription_downloads: {
+        Row: {
+          case_id: string
+          downloaded_at: string
+          id: string
+          operator_id: string
+        }
+        Insert: {
+          case_id: string
+          downloaded_at?: string
+          id?: string
+          operator_id: string
+        }
+        Update: {
+          case_id?: string
+          downloaded_at?: string
+          id?: string
+          operator_id?: string
+        }
+        Relationships: []
+      }
+      sms_logs: {
+        Row: {
+          case_id: string
+          error_message: string | null
+          id: string
+          message: string
+          phone_number: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          case_id: string
+          error_message?: string | null
+          id?: string
+          message: string
+          phone_number: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          case_id?: string
+          error_message?: string | null
+          id?: string
+          message?: string
+          phone_number?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: []
       }
       user_auth: {
         Row: {
