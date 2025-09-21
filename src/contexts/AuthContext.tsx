@@ -61,13 +61,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // For demo purposes, we'll use simple comparison
       if (password === 'demo123') {
         // Get user details from appropriate table
-        const tableName = role === 'operator' ? 'operators' : 'doctors';
-        const columnName = role === 'operator' ? 'operator_id' : 'doctor_id';
-        const { data: userData, error: userError } = await supabase
-          .from(tableName)
-          .select('*')
-          .eq(columnName, userId)
-          .single();
+        let userData: any = null;
+        let userError: any = null;
+
+        if (role === 'operator') {
+          const { data, error } = await supabase
+            .from('operators')
+            .select('*')
+            .eq('operator_id', userId)
+            .single();
+          userData = data;
+          userError = error;
+        } else {
+          const { data, error } = await supabase
+            .from('doctors')
+            .select('*')
+            .eq('doctor_id', userId)
+            .single();
+          userData = data;
+          userError = error;
+        }
 
         if (userError || !userData) {
           console.error('User data fetch failed:', userError);
