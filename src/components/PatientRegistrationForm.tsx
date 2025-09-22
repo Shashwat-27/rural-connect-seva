@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { toast } from '@/hooks/use-toast';
 
 interface PatientInfo {
   name: string;
@@ -27,11 +28,32 @@ export const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = (
 }) => {
   const { t } = useLanguage();
 
+  const validateE164 = (phone: string): boolean => {
+    // E.164 format: +[1-3 digits country code][subscriber number]
+    const e164Regex = /^\+[1-9]\d{1,14}$/;
+    return e164Regex.test(phone);
+  };
+
   const handleChange = (field: keyof PatientInfo, value: string) => {
+    if (field === 'phone') {
+      // Auto-format phone number if it doesn't start with +
+      if (value && !value.startsWith('+')) {
+        value = '+91' + value.replace(/^\+?91/, ''); // Default to India +91
+      }
+      
+      // Validate E.164 format
+      if (value && value.length > 3 && !validateE164(value)) {
+        toast({
+          title: "Invalid Phone Number",
+          description: "Please enter phone number in E.164 format (e.g., +919876543210)",
+          variant: "destructive",
+        });
+      }
+    }
     onUpdate({ ...data, [field]: value });
   };
 
-  const isValid = data.name && data.age && data.gender && data.address && data.phone;
+  const isValid = data.name && data.age && data.gender && data.address && data.phone && (!data.phone || validateE164(data.phone));
 
   return (
     <div className="medical-card">
@@ -140,10 +162,13 @@ export const PatientRegistrationForm: React.FC<PatientRegistrationFormProps> = (
             type="tel"
             value={data.phone}
             onChange={(e) => handleChange('phone', e.target.value)}
-            placeholder={t.enterValue}
-            className="medical-input"
+            placeholder="e.g., +919876543210"
+            className={`medical-input ${data.phone && !validateE164(data.phone) ? "border-red-500" : ""}`}
             required
           />
+          {data.phone && !validateE164(data.phone) && (
+            <p className="text-sm text-red-500">Phone number must be in E.164 format (e.g., +919876543210)</p>
+          )}
         </div>
 
         {/* Next Button */}
