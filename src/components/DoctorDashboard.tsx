@@ -113,10 +113,39 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ onLogout }) =>
 
       if (error) throw error;
 
-      toast({
-        title: "Prescription Sent",
-        description: "Patient will receive SMS with prescription details",
-      });
+      // Send SMS notification
+      try {
+        const { error: smsError } = await supabase.functions.invoke('send-sms', {
+          body: {
+            caseId: selectedCase.id,
+            phoneNumber: selectedCase.patients.phone,
+            patientName: selectedCase.patients.name,
+            prescription: prescription,
+            medicines: medicineList,
+          },
+        });
+
+        if (smsError) {
+          console.error('SMS send failed:', smsError);
+          toast({
+            title: "Prescription Saved",
+            description: "Prescription saved but SMS failed to send",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "Prescription saved and SMS sent to patient",
+          });
+        }
+      } catch (smsError) {
+        console.error('SMS function error:', smsError);
+        toast({
+          title: "Prescription Saved",
+          description: "Prescription saved but SMS failed to send",
+          variant: "destructive",
+        });
+      }
 
       // Refresh cases
       await fetchCases();
@@ -287,13 +316,13 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({ onLogout }) =>
                     {selectedCase.video_url && (
                       <div className="mt-4">
                         <p><strong>Patient Video:</strong></p>
-                        <div className="bg-gray-100 p-4 rounded text-center">
-                          <Video className="h-8 w-8 mx-auto text-gray-500 mb-2" />
-                          <p className="text-sm text-gray-600">Video consultation recording</p>
-                          <Button variant="outline" size="sm" className="mt-2">
-                            Play Video
-                          </Button>
-                        </div>
+                        <video
+                          controls
+                          className="w-full max-w-md rounded-lg"
+                          src={selectedCase.video_url}
+                        >
+                          Your browser does not support video playback.
+                        </video>
                       </div>
                     )}
                   </CardContent>

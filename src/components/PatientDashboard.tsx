@@ -8,12 +8,14 @@ import { SymptomsForm } from './SymptomsForm';
 import { VideoRecordingComponent } from './VideoRecordingComponent';
 import { AssessmentResultComponent } from './AssessmentResultComponent';
 import { useAIAssessment } from '../hooks/useAIAssessment';
+import { usePrescriptionDownload } from '../hooks/usePrescriptionDownload';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { LogOut, User, Heart, Stethoscope, FileText, Video } from 'lucide-react';
+import { LogOut, User, Heart, Stethoscope, FileText, Video, Download, CheckCircle } from 'lucide-react';
 
 type Step = 'registration' | 'vitals' | 'symptoms' | 'assessment' | 'video' | 'completed';
 
@@ -43,6 +45,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onLogout }) 
   const { user, logout } = useAuth();
   const { t } = useLanguage();
   const { assessPatient, isAssessing } = useAIAssessment();
+  const { downloadPrescription, isDownloading } = usePrescriptionDownload();
   
   const [currentStep, setCurrentStep] = useState<Step>('registration');
   const [formData, setFormData] = useState<FormData>({
@@ -65,6 +68,32 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onLogout }) 
   
   const [assessmentResult, setAssessmentResult] = useState<any>(null);
   const [currentCaseId, setCurrentCaseId] = useState<string | null>(null);
+  const [completedCases, setCompletedCases] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (user?.role === 'operator') {
+      fetchCompletedCases();
+    }
+  }, [user]);
+
+  const fetchCompletedCases = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('medical_cases')
+        .select(`
+          *,
+          patients (name, age, phone)
+        `)
+        .eq('operator_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setCompletedCases(data || []);
+    } catch (error) {
+      console.error('Error fetching completed cases:', error);
+    }
+  };
 
   const steps = [
     { key: 'registration', label: 'Registration', icon: <User className="h-4 w-4" /> },
@@ -217,6 +246,9 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onLogout }) 
     });
     setAssessmentResult(null);
     setCurrentCaseId(null);
+    if (user?.role === 'operator') {
+      fetchCompletedCases();
+    }
   };
 
   const renderCurrentStep = () => {
@@ -353,6 +385,73 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onLogout }) 
 
         {/* Current Step Content */}
         {renderCurrentStep()}
+
+        {/* Completed Cases */}
+        {user?.role === 'operator' && completedCases.length > 0 && currentStep === 'completed' && (
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                Recent Cases
+              </CardTitle>
+              <CardDescription>
+                Your recent patient cases and prescriptions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {completedCases.map((case_item, index) => (
+                  <div key={index} className="p-4 border rounded-lg">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-medium">{case_item.patients?.name}</h4>
+                        <p className="text-sm text-gray-600">{case_item.assessment_status}</p>
+                        <p className="text-sm text-gray-500">
+                          {new Date(case_item.created_at).toLocaleDateString()}
+                        </p>
+                        {case_item.sms_status && (
+                          <p className="text-sm text-blue-600">
+                            SMS: {case_item.sms_status}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Badge variant={
+                          case_item.status === 'prescribed' ? 'default' : 
+                          case_item.status === 'pending' ? 'secondary' : 'outline'
+                        }>
+                          {case_item.status}
+                        </Badge>
+                        {case_item.status === 'prescribed' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => downloadPrescription(case_item)}
+                            disabled={isDownloading}
+                            className="text-xs"
+                          >
+                            <Download className="h-3 w-3 mr-1" />
+                            Download
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    {case_item.prescription && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                        <strong>Prescription:</strong> {case_item.prescription}
+                      </div>
+                    )}
+                    {case_item.prescribed_medicines?.length > 0 && (
+                      <div className="mt-2 p-2 bg-green-50 rounded text-sm">
+                        <strong>Medicines:</strong> {case_item.prescribed_medicines.join(', ')}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
