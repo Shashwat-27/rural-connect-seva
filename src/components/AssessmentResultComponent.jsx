@@ -3,19 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, CheckCircle, Clock, Pill } from 'lucide-react';
 
-interface AssessmentResult {
-  status: 'simple' | 'moderate' | 'high';
-  severity_score: number;
-  recommendation: string;
-  medicines?: string[];
-}
-
-interface AssessmentResultComponentProps {
-  result: AssessmentResult | null;
-  isLoading: boolean;
-}
-
-export const AssessmentResultComponent: React.FC<AssessmentResultComponentProps> = ({ result, isLoading }) => {
+export const AssessmentResultComponent = ({ result, isLoading }) => {
   if (isLoading) {
     return (
       <Card>
@@ -32,7 +20,7 @@ export const AssessmentResultComponent: React.FC<AssessmentResultComponentProps>
 
   if (!result) return null;
 
-  const getStatusConfig = (status: string) => {
+  const getStatusConfig = (status) => {
     switch (status) {
       case 'simple':
         return {
