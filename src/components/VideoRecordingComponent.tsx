@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useVideoRecorder } from '../hooks/useVideoRecorder';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { LanguageToggle } from './LanguageToggle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
@@ -97,6 +98,9 @@ export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = (
 
   return (
     <div className="space-y-6">
+      {/* Language Toggle */}
+      <LanguageToggle />
+      
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

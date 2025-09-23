@@ -59,9 +59,16 @@ export const useVideoRecorder = () => {
 
     try {
       setIsUploading(true);
+      
+      // Check authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('User not authenticated');
+      }
+      
       const fileName = `case_${caseId}_${Date.now()}.webm`;
       
-      // Upload to Supabase Storage
+      // Upload to Supabase Storage with authenticated user
       const { data, error } = await supabase.storage
         .from('medical-videos')
         .upload(fileName, videoBlob, {
@@ -70,6 +77,7 @@ export const useVideoRecorder = () => {
         });
 
       if (error) {
+        console.error('Supabase upload error:', error);
         throw new Error(`Upload failed: ${error.message}`);
       }
 
@@ -79,6 +87,7 @@ export const useVideoRecorder = () => {
         .getPublicUrl(fileName);
       
       setIsUploading(false);
+      console.log('Video uploaded successfully:', publicUrl);
       return publicUrl;
     } catch (error) {
       setIsUploading(false);
