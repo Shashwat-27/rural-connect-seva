@@ -6,9 +6,11 @@ import { LoginPage } from '../components/LoginPage';
 import { PatientDashboard } from '../components/PatientDashboard';
 import { DoctorDashboard } from '../components/DoctorDashboard';
 
+type AppState = 'home' | 'login' | 'dashboard';
+
 const Index = () => {
   const { user } = useAuth();
-  const [appState, setAppState] = useState('home');
+  const [appState, setAppState] = useState<AppState>('home');
 
   const handleLoginClick = () => setAppState('login');
   const handleLoginSuccess = () => setAppState('dashboard');

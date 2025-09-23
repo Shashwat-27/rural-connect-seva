@@ -55,7 +55,7 @@ export const LoginPage = ({ onBack, onLoginSuccess }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-secondary p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4">
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -66,10 +66,10 @@ export const LoginPage = ({ onBack, onLoginSuccess }) => {
         </div>
 
         {/* Login Form */}
-        <Card className="medical-card shadow-xl border-border">
+        <Card className="shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-foreground">Login</CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardTitle className="text-2xl font-bold text-gray-800">Login</CardTitle>
+            <CardDescription>
               Enter your credentials to access the healthcare system
             </CardDescription>
           </CardHeader>
@@ -130,7 +130,7 @@ export const LoginPage = ({ onBack, onLoginSuccess }) => {
 
               <Button
                 type="submit"
-                className="w-full medical-button bg-primary hover:bg-primary-dark text-primary-foreground"
+                className="w-full bg-blue-600 hover:bg-blue-700"
                 disabled={loading}
               >
                 {loading ? 'Logging in...' : 'Login'}
@@ -140,10 +140,10 @@ export const LoginPage = ({ onBack, onLoginSuccess }) => {
         </Card>
 
         {/* Demo Credentials */}
-        <Card className="mt-6 bg-warning-light border-warning-light">
+        <Card className="mt-6 bg-yellow-50 border-yellow-200">
           <CardHeader>
-            <CardTitle className="text-lg text-warning-foreground">Demo Credentials</CardTitle>
-            <CardDescription className="text-warning-foreground">
+            <CardTitle className="text-lg text-yellow-800">Demo Credentials</CardTitle>
+            <CardDescription className="text-yellow-700">
               Use these credentials for testing (Password: demo123)
             </CardDescription>
           </CardHeader>
