@@ -1,32 +1,39 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LanguageToggle } from './LanguageToggle';
 import { PatientRegistrationForm } from './PatientRegistrationForm';
 import { VitalsEntryForm } from './VitalsEntryForm';
 import { SymptomsForm } from './SymptomsForm';
-import { VideoCallComponent } from './VideoCallComponent';
-import { VideoRecordingComponent } from './VideoRecordingComponent';
-import { ResponsiveNavbar } from './ResponsiveNavbar';
 import { AssessmentResultComponent } from './AssessmentResultComponent';
+import { VideoRecordingComponent } from './VideoRecordingComponent';
+import { VideoCallComponent } from './VideoCallComponent';
+import { ResponsiveNavbar } from './ResponsiveNavbar';
 import { useAIAssessment } from '../hooks/useAIAssessment';
-import { usePrescriptionDownload } from '../hooks/usePrescriptionDownload';
+import { useOfflineSync } from '../hooks/useOfflineSync';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { LogOut, User, Heart, Stethoscope, FileText, Video, Download, CheckCircle } from 'lucide-react';
+import { 
+  User, 
+  Activity, 
+  FileText, 
+  ClipboardCheck, 
+  Heart, 
+  LogOut,
+  Video,
+  Download,
+  AlertTriangle
+} from 'lucide-react';
 
 export const PatientDashboard = ({ onLogout }) => {
-  const { user, logout } = useAuth();
   const { t } = useLanguage();
-  const { assessPatient, isAssessing } = useAIAssessment();
-  const { downloadPrescription, isDownloading } = usePrescriptionDownload();
-  
   const [currentStep, setCurrentStep] = useState('registration');
-  const [activeSection, setActiveSection] = useState('dashboard');
+  const [assessmentResult, setAssessmentResult] = useState(null);
+  const [showVideoCall, setShowVideoCall] = useState(false);
+  const { assessSymptoms, loading } = useAIAssessment();
+  const { saveFormData } = useOfflineSync();
+  
   const [formData, setFormData] = useState({
     patientInfo: {
       name: '',
@@ -44,52 +51,17 @@ export const PatientDashboard = ({ onLogout }) => {
     },
     symptoms: [],
   });
-  
-  const [assessmentResult, setAssessmentResult] = useState(null);
-  const [currentCaseId, setCurrentCaseId] = useState(null);
-  const [completedCases, setCompletedCases] = useState([]);
-
-  useEffect(() => {
-    if (user?.role === 'operator') {
-      fetchCompletedCases();
-    }
-  }, [user]);
-
-  const fetchCompletedCases = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('medical_cases')
-        .select(`
-          *,
-          patients (name, age, phone)
-        `)
-        .eq('operator_id', user?.id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-      setCompletedCases(data || []);
-    } catch (error) {
-      console.error('Error fetching completed cases:', error);
-    }
-  };
 
   const steps = [
-    { key: 'registration', label: 'Registration', icon: <User className="h-4 w-4" /> },
-    { key: 'vitals', label: 'Vitals', icon: <Heart className="h-4 w-4" /> },
-    { key: 'symptoms', label: 'Symptoms', icon: <Stethoscope className="h-4 w-4" /> },
-    { key: 'assessment', label: 'Assessment', icon: <FileText className="h-4 w-4" /> },
-    { key: 'video', label: 'Video', icon: <Video className="h-4 w-4" /> },
-    { key: 'emergency_call', label: 'Emergency Call', icon: <Video className="h-4 w-4" /> },
+    { key: 'registration', title: t?.registration || 'Registration', icon: User },
+    { key: 'vitals', title: t?.vitals || 'Vitals', icon: Activity },
+    { key: 'symptoms', title: t?.symptoms || 'Symptoms', icon: FileText },
+    { key: 'assessment', title: t?.assessment || 'Assessment', icon: ClipboardCheck },
   ];
 
-  const getStepIndex = (step) => steps.findIndex(s => s.key === step);
-  const currentStepIndex = getStepIndex(currentStep);
-  const progress = ((currentStepIndex + 1) / steps.length) * 100;
-
-  const handleLogout = () => {
-    logout();
-    onLogout();
+  const getStepProgress = () => {
+    const stepIndex = steps.findIndex(step => step.key === currentStep);
+    return ((stepIndex + 1) / steps.length) * 100;
   };
 
   const handlePatientInfoUpdate = (data) => {
@@ -104,147 +76,94 @@ export const PatientDashboard = ({ onLogout }) => {
     setFormData(prev => ({ ...prev, symptoms: data }));
   };
 
-  const createPatientRecord = async () => {
+  const handleSymptomsSubmit = async () => {
     try {
-      // Create patient record
-      const { data: patientData, error: patientError } = await supabase
-        .from('patients')
-        .insert({
-          name: formData.patientInfo.name,
-          age: parseInt(formData.patientInfo.age),
-          gender: formData.patientInfo.gender,
-          address: formData.patientInfo.address,
-          phone: formData.patientInfo.phone,
-          operator_id: user?.id,
-        })
-        .select()
-        .single();
-
-      if (patientError) throw patientError;
-
-      // Create medical case
-      const { data: caseData, error: caseError } = await supabase
-        .from('medical_cases')
-        .insert({
-          patient_id: patientData.id,
-          operator_id: user?.id,
-          blood_pressure_systolic: parseInt(formData.vitals.bloodPressureSystolic),
-          blood_pressure_diastolic: parseInt(formData.vitals.bloodPressureDiastolic),
-          blood_sugar: parseInt(formData.vitals.bloodSugar),
-          temperature: parseFloat(formData.vitals.temperature),
-          oxygen_saturation: parseInt(formData.vitals.oxygen),
-          symptoms: formData.symptoms,
-        })
-        .select()
-        .single();
-
-      if (caseError) throw caseError;
-
-      setCurrentCaseId(caseData.id);
-      return caseData.id;
-    } catch (error) {
-      console.error('Error creating patient record:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create patient record",
-        variant: "destructive",
-      });
-      throw error;
-    }
-  };
-
-  const handleAssessment = async () => {
-    setCurrentStep('assessment');
-    
-    try {
-      const caseId = await createPatientRecord();
-      const result = await assessPatient(formData.vitals, formData.symptoms);
+      const result = await assessSymptoms(formData);
       setAssessmentResult(result);
+      setCurrentStep('assessment');
+      
+      // Save form data through offline sync system
+      saveFormData({ ...formData, assessment: result });
+      
+      toast({
+        title: t?.assessmentComplete || "Assessment Complete",
+        description: t?.assessmentCompleteDesc || "AI assessment has been completed successfully.",
+      });
 
-      // Update case with assessment result
-      await supabase
-        .from('medical_cases')
-        .update({
-          assessment_status: result.status,
-          ai_recommendation: result.recommendation,
-          severity_score: result.severity_score,
-          prescribed_medicines: result.medicines || [],
-        })
-        .eq('id', caseId);
-
-      // If simple case, mark as completed
-      if (result.status === 'simple') {
-        setCurrentStep('completed');
+      // Check if high risk case needs video call
+      if (result?.riskLevel === 'high') {
         toast({
-          title: "Assessment Complete",
-          description: "Simple condition detected. Medicines prescribed.",
-        });
-      } else if (result.status === 'moderate') {
-        setCurrentStep('video');
-      } else if (result.status === 'high') {
-        // High risk - start emergency video call
-        setCurrentStep('emergency_call');
-        toast({
-          title: "High Risk Detected",
-          description: "Starting emergency video consultation with doctor!",
+          title: t?.highRiskCase || "High Risk Case Detected",
+          description: t?.highRiskCaseDesc || "This case requires immediate doctor consultation.",
           variant: "destructive",
         });
-      } else {
-        toast({
-          title: "Critical Condition",
-          description: "Immediate medical attention required!",
-          variant: "destructive",
-        });
-        setCurrentStep('completed');
       }
     } catch (error) {
-      console.error('Assessment failed:', error);
       toast({
-        title: "Assessment Failed",
-        description: "Please try again",
+        title: t?.assessmentError || "Assessment Error",
+        description: t?.assessmentErrorDesc || "Failed to complete assessment. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  const handleEmergencyCallEnd = () => {
-    setCurrentStep('completed');
-    toast({
-      title: "Emergency Consultation Complete",
-      description: "Follow doctor's instructions immediately",
-    });
-  };
-
-  const handleVideoComplete = async (videoUrl) => {
-    if (currentCaseId) {
-      await supabase
-        .from('medical_cases')
-        .update({
-          video_url: videoUrl,
-          status: 'moderate'
-        })
-        .eq('id', currentCaseId);
-    }
-    
-    setCurrentStep('completed');
-    toast({
-      title: "Video Recorded",
-      description: "Video sent to doctor for review",
-    });
-  };
-
-  const startNewCase = () => {
-    setCurrentStep('registration');
+  const handleNewPatient = () => {
     setFormData({
-      patientInfo: { name: '', age: '', gender: '', address: '', phone: '' },
-      vitals: { bloodPressureSystolic: '', bloodPressureDiastolic: '', bloodSugar: '', temperature: '', oxygen: '' },
+      patientInfo: {
+        name: '',
+        age: '',
+        gender: '',
+        address: '',
+        phone: '',
+      },
+      vitals: {
+        bloodPressureSystolic: '',
+        bloodPressureDiastolic: '',
+        bloodSugar: '',
+        temperature: '',
+        oxygen: '',
+      },
       symptoms: [],
     });
     setAssessmentResult(null);
-    setCurrentCaseId(null);
-    if (user?.role === 'operator') {
-      fetchCompletedCases();
+    setCurrentStep('registration');
+    setShowVideoCall(false);
+  };
+
+  const downloadPrescription = () => {
+    if (!assessmentResult || !formData.patientInfo.name) {
+      toast({
+        title: "Error",
+        description: "No prescription data available to download.",
+        variant: "destructive",
+      });
+      return;
     }
+
+    const prescriptionData = {
+      patient: formData.patientInfo,
+      vitals: formData.vitals,
+      symptoms: formData.symptoms,
+      assessment: assessmentResult,
+      date: new Date().toLocaleDateString(),
+      time: new Date().toLocaleTimeString(),
+    };
+
+    const dataStr = JSON.stringify(prescriptionData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `prescription_${formData.patientInfo.name}_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Success",
+      description: "Prescription downloaded successfully.",
+    });
   };
 
   const renderCurrentStep = () => {
@@ -271,180 +190,152 @@ export const PatientDashboard = ({ onLogout }) => {
           <SymptomsForm
             data={formData.symptoms}
             onUpdate={handleSymptomsUpdate}
-            onSubmit={handleAssessment}
+            onSubmit={handleSymptomsSubmit}
             onBack={() => setCurrentStep('vitals')}
+            isLoading={loading}
           />
         );
       case 'assessment':
         return (
-          <AssessmentResultComponent
-            result={assessmentResult}
-            isLoading={isAssessing}
-          />
-        );
-      case 'emergency_call':
-        return (
-          <VideoCallComponent
-            onCallEnd={handleEmergencyCallEnd}
-            onBack={() => setCurrentStep('symptoms')}
-            patientInfo={formData.patientInfo}
-          />
-        );
-      case 'video':
-        return (
-          <VideoRecordingComponent
-            onComplete={handleVideoComplete}
-            onBack={() => setCurrentStep('symptoms')}
-          />
-        );
-      case 'completed':
-        return (
-          <Card className="text-center">
-            <CardHeader>
-              <CardTitle className="text-green-600">Case Completed</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">Patient assessment has been completed successfully.</p>
-              {assessmentResult && (
-                <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                  <p><strong>Status:</strong> {assessmentResult.status}</p>
-                  <p><strong>Recommendation:</strong> {assessmentResult.recommendation}</p>
-                  {assessmentResult.medicines && (
-                    <div>
-                      <strong>Medicines:</strong>
-                      <ul className="list-disc list-inside">
-                        {assessmentResult.medicines.map((medicine, index) => (
-                          <li key={index}>{medicine}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-              <Button onClick={startNewCase} className="w-full">
-                Start New Case
+          <div className="space-y-6">
+            <AssessmentResultComponent 
+              result={assessmentResult}
+              patientData={formData}
+            />
+            
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button
+                onClick={handleNewPatient}
+                className="flex-1 medical-button bg-primary hover:bg-primary-dark text-primary-foreground"
+              >
+                <User className="h-4 w-4 mr-2" />
+                New Patient
               </Button>
-            </CardContent>
-          </Card>
+              
+              <Button
+                onClick={downloadPrescription}
+                variant="outline"
+                className="flex-1"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download Prescription
+              </Button>
+              
+              {assessmentResult?.riskLevel === 'high' && (
+                <Button
+                  onClick={() => setShowVideoCall(true)}
+                  variant="destructive"
+                  className="flex-1"
+                >
+                  <Video className="h-4 w-4 mr-2" />
+                  <AlertTriangle className="h-4 w-4 mr-1" />
+                  Emergency Call
+                </Button>
+              )}
+            </div>
+
+            {/* Video Recording Component */}
+            <VideoRecordingComponent caseId={formData.patientInfo.name || 'unknown'} />
+          </div>
         );
       default:
         return null;
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Responsive Navbar */}
-      <ResponsiveNavbar 
-        onLogout={onLogout} 
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
+  if (showVideoCall) {
+    return (
+      <VideoCallComponent
+        patientData={formData}
+        assessmentResult={assessmentResult}
+        onEnd={() => setShowVideoCall(false)}
       />
+    );
+  }
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Progress Indicator */}
-        {currentStep !== 'completed' && (
-          <Card className="mb-6 bg-white shadow-sm border-0">
-            <CardContent className="p-4 sm:p-6">
-              <div className="mb-4">
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">Progress</span>
-                  <span className="text-sm text-gray-500">{Math.round(progress)}%</span>
-                </div>
-                <Progress value={progress} className="h-2" />
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary">
+      {/* Header */}
+      <header className="bg-card border-b border-border shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Heart className="h-8 w-8 text-destructive" />
+              <div>
+                <h1 className="text-xl md:text-2xl font-bold text-foreground">Patient Dashboard</h1>
+                <p className="text-sm text-muted-foreground">Healthcare Assessment Portal</p>
               </div>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
-                {steps.slice(0, 5).map((step, index) => (
+            </div>
+            <div className="flex items-center gap-3">
+              <LanguageToggle />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onLogout}
+                className="flex items-center gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden md:inline">Logout</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        {/* Progress Section */}
+        <Card className="medical-card mb-6 shadow-lg">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-foreground flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-destructive" />
+                  Healthcare Assessment
+                </CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  Step {steps.findIndex(s => s.key === currentStep) + 1} of {steps.length}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Progress Bar */}
+            <div className="mb-4">
+              <Progress value={getStepProgress()} className="h-3" />
+            </div>
+            
+            {/* Step Indicators */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {steps.map((step, index) => {
+                const StepIcon = step.icon;
+                const isActive = step.key === currentStep;
+                const isCompleted = steps.findIndex(s => s.key === currentStep) > index;
+                
+                return (
                   <div
                     key={step.key}
-                    className={`flex flex-col items-center text-xs ${
-                      index <= currentStepIndex ? 'text-blue-600' : 'text-gray-400'
+                    className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-300 ${
+                      isActive 
+                        ? 'bg-primary text-primary-foreground shadow-lg' 
+                        : isCompleted 
+                        ? 'bg-success text-success-foreground shadow-md' 
+                        : 'bg-secondary text-secondary-foreground'
                     }`}
                   >
-                    <div className={`p-2 rounded-full mb-1 ${
-                      index <= currentStepIndex ? 'bg-blue-100' : 'bg-gray-100'
-                    }`}>
-                      {step.icon}
-                    </div>
-                    <span className="text-center">{step.label}</span>
+                    <StepIcon className="h-6 w-6" />
+                    <span className="text-sm text-center font-medium">{step.title}</span>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Current Step Content */}
-        <div className="mb-6">
+        {/* Main Content */}
+        <div className="space-y-6">
           {renderCurrentStep()}
         </div>
-
-        {/* Completed Cases */}
-        {user?.role === 'operator' && completedCases.length > 0 && currentStep === 'completed' && (
-          <Card className="bg-white shadow-sm border-0">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                Recent Cases
-              </CardTitle>
-              <CardDescription>
-                Your recent patient cases and prescriptions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {completedCases.map((case_item, index) => (
-                  <div key={index} className="p-4 border rounded-lg bg-gray-50">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-900">{case_item.patients?.name}</h4>
-                        <p className="text-sm text-gray-600 capitalize">{case_item.assessment_status}</p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(case_item.created_at).toLocaleDateString()}
-                        </p>
-                        {case_item.sms_status && (
-                          <p className="text-sm text-blue-600">
-                            SMS: {case_item.sms_status}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-2 sm:items-end">
-                        <Badge variant={
-                          case_item.status === 'prescribed' ? 'default' : 
-                          case_item.status === 'pending' ? 'secondary' : 'outline'
-                        }>
-                          {case_item.status}
-                        </Badge>
-                        {case_item.status === 'prescribed' && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => downloadPrescription(case_item)}
-                            disabled={isDownloading}
-                            className="text-xs"
-                          >
-                            <Download className="h-3 w-3 mr-1" />
-                            Download
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                    {case_item.prescription && (
-                      <div className="mt-3 p-3 bg-white rounded text-sm border">
-                        <strong>Prescription:</strong> {case_item.prescription}
-                      </div>
-                    )}
-                    {case_item.prescribed_medicines?.length > 0 && (
-                      <div className="mt-3 p-3 bg-green-50 rounded text-sm border border-green-200">
-                        <strong>Medicines:</strong> {case_item.prescribed_medicines.join(', ')}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );

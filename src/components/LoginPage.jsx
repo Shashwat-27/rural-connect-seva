@@ -55,7 +55,7 @@ export const LoginPage = ({ onBack, onLoginSuccess }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-4">
+    <div className="min-h-screen bg-gradient-to-br from-background to-secondary p-4">
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -66,10 +66,10 @@ export const LoginPage = ({ onBack, onLoginSuccess }) => {
         </div>
 
         {/* Login Form */}
-        <Card className="shadow-lg">
+        <Card className="medical-card shadow-xl border-border">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gray-800">Login</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl font-bold text-foreground">Login</CardTitle>
+            <CardDescription className="text-muted-foreground">
               Enter your credentials to access the healthcare system
             </CardDescription>
           </CardHeader>
@@ -130,7 +130,7 @@ export const LoginPage = ({ onBack, onLoginSuccess }) => {
 
               <Button
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full medical-button bg-primary hover:bg-primary-dark text-primary-foreground"
                 disabled={loading}
               >
                 {loading ? 'Logging in...' : 'Login'}
@@ -140,10 +140,10 @@ export const LoginPage = ({ onBack, onLoginSuccess }) => {
         </Card>
 
         {/* Demo Credentials */}
-        <Card className="mt-6 bg-yellow-50 border-yellow-200">
+        <Card className="mt-6 bg-warning-light border-warning-light">
           <CardHeader>
-            <CardTitle className="text-lg text-yellow-800">Demo Credentials</CardTitle>
-            <CardDescription className="text-yellow-700">
+            <CardTitle className="text-lg text-warning-foreground">Demo Credentials</CardTitle>
+            <CardDescription className="text-warning-foreground">
               Use these credentials for testing (Password: demo123)
             </CardDescription>
           </CardHeader>
