@@ -8,6 +8,7 @@ import { SymptomsForm } from './SymptomsForm';
 import { VideoCallComponent } from './VideoCallComponent';
 import { VideoRecordingComponent } from './VideoRecordingComponent';
 import { ResponsiveNavbar } from './ResponsiveNavbar';
+import { AssessmentResultComponent } from './AssessmentResultComponent';
 import { useAIAssessment } from '../hooks/useAIAssessment';
 import { usePrescriptionDownload } from '../hooks/usePrescriptionDownload';
 import { Button } from '@/components/ui/button';
