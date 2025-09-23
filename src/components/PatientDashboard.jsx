@@ -5,8 +5,9 @@ import { LanguageToggle } from './LanguageToggle';
 import { PatientRegistrationForm } from './PatientRegistrationForm';
 import { VitalsEntryForm } from './VitalsEntryForm';
 import { SymptomsForm } from './SymptomsForm';
+import { VideoCallComponent } from './VideoCallComponent';
 import { VideoRecordingComponent } from './VideoRecordingComponent';
-import { AssessmentResultComponent } from './AssessmentResultComponent';
+import { ResponsiveNavbar } from './ResponsiveNavbar';
 import { useAIAssessment } from '../hooks/useAIAssessment';
 import { usePrescriptionDownload } from '../hooks/usePrescriptionDownload';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ export const PatientDashboard = ({ onLogout }) => {
   const { downloadPrescription, isDownloading } = usePrescriptionDownload();
   
   const [currentStep, setCurrentStep] = useState('registration');
+  const [activeSection, setActiveSection] = useState('dashboard');
   const [formData, setFormData] = useState({
     patientInfo: {
       name: '',
@@ -77,6 +79,7 @@ export const PatientDashboard = ({ onLogout }) => {
     { key: 'symptoms', label: 'Symptoms', icon: <Stethoscope className="h-4 w-4" /> },
     { key: 'assessment', label: 'Assessment', icon: <FileText className="h-4 w-4" /> },
     { key: 'video', label: 'Video', icon: <Video className="h-4 w-4" /> },
+    { key: 'emergency_call', label: 'Emergency Call', icon: <Video className="h-4 w-4" /> },
   ];
 
   const getStepIndex = (step) => steps.findIndex(s => s.key === step);
@@ -177,9 +180,17 @@ export const PatientDashboard = ({ onLogout }) => {
         });
       } else if (result.status === 'moderate') {
         setCurrentStep('video');
-      } else {
+      } else if (result.status === 'high') {
+        // High risk - start emergency video call
+        setCurrentStep('emergency_call');
         toast({
           title: "High Risk Detected",
+          description: "Starting emergency video consultation with doctor!",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Critical Condition",
           description: "Immediate medical attention required!",
           variant: "destructive",
         });
@@ -193,6 +204,14 @@ export const PatientDashboard = ({ onLogout }) => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleEmergencyCallEnd = () => {
+    setCurrentStep('completed');
+    toast({
+      title: "Emergency Consultation Complete",
+      description: "Follow doctor's instructions immediately",
+    });
   };
 
   const handleVideoComplete = async (videoUrl) => {
@@ -262,6 +281,14 @@ export const PatientDashboard = ({ onLogout }) => {
             isLoading={isAssessing}
           />
         );
+      case 'emergency_call':
+        return (
+          <VideoCallComponent
+            onCallEnd={handleEmergencyCallEnd}
+            onBack={() => setCurrentStep('symptoms')}
+            patientInfo={formData.patientInfo}
+          />
+        );
       case 'video':
         return (
           <VideoRecordingComponent
@@ -305,41 +332,28 @@ export const PatientDashboard = ({ onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-100 p-2 rounded-full">
-              {user?.role === 'operator' ? <User className="h-6 w-6 text-blue-600" /> : <Heart className="h-6 w-6 text-blue-600" />}
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold">{user?.name}</h2>
-              <p className="text-sm text-gray-600 capitalize">{user?.role}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <LanguageToggle />
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Responsive Navbar */}
+      <ResponsiveNavbar 
+        onLogout={onLogout} 
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+      />
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Progress Indicator */}
         {currentStep !== 'completed' && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
+          <Card className="mb-6 bg-white shadow-sm border-0">
+            <CardContent className="p-4 sm:p-6">
               <div className="mb-4">
                 <div className="flex justify-between mb-2">
-                  <span className="text-sm font-medium">Progress</span>
-                  <span className="text-sm text-gray-600">{Math.round(progress)}%</span>
+                  <span className="text-sm font-medium text-gray-700">Progress</span>
+                  <span className="text-sm text-gray-500">{Math.round(progress)}%</span>
                 </div>
                 <Progress value={progress} className="h-2" />
               </div>
-              <div className="flex justify-between">
-                {steps.map((step, index) => (
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-4">
+                {steps.slice(0, 5).map((step, index) => (
                   <div
                     key={step.key}
                     className={`flex flex-col items-center text-xs ${
@@ -351,7 +365,7 @@ export const PatientDashboard = ({ onLogout }) => {
                     }`}>
                       {step.icon}
                     </div>
-                    <span>{step.label}</span>
+                    <span className="text-center">{step.label}</span>
                   </div>
                 ))}
               </div>
@@ -360,11 +374,13 @@ export const PatientDashboard = ({ onLogout }) => {
         )}
 
         {/* Current Step Content */}
-        {renderCurrentStep()}
+        <div className="mb-6">
+          {renderCurrentStep()}
+        </div>
 
         {/* Completed Cases */}
         {user?.role === 'operator' && completedCases.length > 0 && currentStep === 'completed' && (
-          <Card className="mt-6">
+          <Card className="bg-white shadow-sm border-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-600" />
@@ -377,11 +393,11 @@ export const PatientDashboard = ({ onLogout }) => {
             <CardContent>
               <div className="space-y-4">
                 {completedCases.map((case_item, index) => (
-                  <div key={index} className="p-4 border rounded-lg">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium">{case_item.patients?.name}</h4>
-                        <p className="text-sm text-gray-600">{case_item.assessment_status}</p>
+                  <div key={index} className="p-4 border rounded-lg bg-gray-50">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">{case_item.patients?.name}</h4>
+                        <p className="text-sm text-gray-600 capitalize">{case_item.assessment_status}</p>
                         <p className="text-sm text-gray-500">
                           {new Date(case_item.created_at).toLocaleDateString()}
                         </p>
@@ -391,7 +407,7 @@ export const PatientDashboard = ({ onLogout }) => {
                           </p>
                         )}
                       </div>
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-2 sm:items-end">
                         <Badge variant={
                           case_item.status === 'prescribed' ? 'default' : 
                           case_item.status === 'pending' ? 'secondary' : 'outline'
@@ -413,12 +429,12 @@ export const PatientDashboard = ({ onLogout }) => {
                       </div>
                     </div>
                     {case_item.prescription && (
-                      <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
+                      <div className="mt-3 p-3 bg-white rounded text-sm border">
                         <strong>Prescription:</strong> {case_item.prescription}
                       </div>
                     )}
                     {case_item.prescribed_medicines?.length > 0 && (
-                      <div className="mt-2 p-2 bg-green-50 rounded text-sm">
+                      <div className="mt-3 p-3 bg-green-50 rounded text-sm border border-green-200">
                         <strong>Medicines:</strong> {case_item.prescribed_medicines.join(', ')}
                       </div>
                     )}
