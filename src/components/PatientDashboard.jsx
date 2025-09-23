@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LanguageToggle } from './LanguageToggle';
@@ -17,38 +17,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { LogOut, User, Heart, Stethoscope, FileText, Video, Download, CheckCircle } from 'lucide-react';
 
-type Step = 'registration' | 'vitals' | 'symptoms' | 'assessment' | 'video' | 'completed';
-
-interface FormData {
-  patientInfo: {
-    name: string;
-    age: string;
-    gender: string;
-    address: string;
-    phone: string;
-  };
-  vitals: {
-    bloodPressureSystolic: string;
-    bloodPressureDiastolic: string;
-    bloodSugar: string;
-    temperature: string;
-    oxygen: string;
-  };
-  symptoms: string[];
-}
-
-interface PatientDashboardProps {
-  onLogout: () => void;
-}
-
-export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onLogout }) => {
+export const PatientDashboard = ({ onLogout }) => {
   const { user, logout } = useAuth();
   const { t } = useLanguage();
   const { assessPatient, isAssessing } = useAIAssessment();
   const { downloadPrescription, isDownloading } = usePrescriptionDownload();
   
-  const [currentStep, setCurrentStep] = useState<Step>('registration');
-  const [formData, setFormData] = useState<FormData>({
+  const [currentStep, setCurrentStep] = useState('registration');
+  const [formData, setFormData] = useState({
     patientInfo: {
       name: '',
       age: '',
@@ -66,9 +42,9 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onLogout }) 
     symptoms: [],
   });
   
-  const [assessmentResult, setAssessmentResult] = useState<any>(null);
-  const [currentCaseId, setCurrentCaseId] = useState<string | null>(null);
-  const [completedCases, setCompletedCases] = useState<any[]>([]);
+  const [assessmentResult, setAssessmentResult] = useState(null);
+  const [currentCaseId, setCurrentCaseId] = useState(null);
+  const [completedCases, setCompletedCases] = useState([]);
 
   useEffect(() => {
     if (user?.role === 'operator') {
@@ -103,7 +79,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onLogout }) 
     { key: 'video', label: 'Video', icon: <Video className="h-4 w-4" /> },
   ];
 
-  const getStepIndex = (step: Step) => steps.findIndex(s => s.key === step);
+  const getStepIndex = (step) => steps.findIndex(s => s.key === step);
   const currentStepIndex = getStepIndex(currentStep);
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
 
@@ -112,15 +88,15 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onLogout }) 
     onLogout();
   };
 
-  const handlePatientInfoUpdate = (data: FormData['patientInfo']) => {
+  const handlePatientInfoUpdate = (data) => {
     setFormData(prev => ({ ...prev, patientInfo: data }));
   };
 
-  const handleVitalsUpdate = (data: FormData['vitals']) => {
+  const handleVitalsUpdate = (data) => {
     setFormData(prev => ({ ...prev, vitals: data }));
   };
 
-  const handleSymptomsUpdate = (data: string[]) => {
+  const handleSymptomsUpdate = (data) => {
     setFormData(prev => ({ ...prev, symptoms: data }));
   };
 
@@ -219,7 +195,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onLogout }) 
     }
   };
 
-  const handleVideoComplete = async (videoUrl: string) => {
+  const handleVideoComplete = async (videoUrl) => {
     if (currentCaseId) {
       await supabase
         .from('medical_cases')
@@ -309,7 +285,7 @@ export const PatientDashboard: React.FC<PatientDashboardProps> = ({ onLogout }) 
                     <div>
                       <strong>Medicines:</strong>
                       <ul className="list-disc list-inside">
-                        {assessmentResult.medicines.map((medicine: string, index: number) => (
+                        {assessmentResult.medicines.map((medicine, index) => (
                           <li key={index}>{medicine}</li>
                         ))}
                       </ul>

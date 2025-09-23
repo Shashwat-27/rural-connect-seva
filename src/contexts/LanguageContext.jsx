@@ -1,17 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import languageData from '../data/languages.json';
 
-type Language = 'hi' | 'en' | 'pa';
-type Translations = typeof languageData.en;
-
-interface LanguageContextType {
-  language: Language;
-  setLanguage: (lang: Language) => void;
-  t: Translations;
-  isRTL: boolean;
-}
-
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const LanguageContext = createContext(undefined);
 
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
@@ -21,14 +11,14 @@ export const useLanguage = () => {
   return context;
 };
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>(() => {
+export const LanguageProvider = ({ children }) => {
+  const [language, setLanguage] = useState(() => {
     // Load from localStorage or default to Hindi
     const saved = localStorage.getItem('telemedicine-language');
-    return (saved as Language) || 'hi';
+    return saved || 'hi';
   });
 
-  const t = languageData[language] as Translations;
+  const t = languageData[language];
   const isRTL = false; // For future RTL language support
 
   useEffect(() => {

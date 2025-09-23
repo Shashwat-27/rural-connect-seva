@@ -10,20 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import { ArrowLeft, User, Lock, UserCheck } from 'lucide-react';
 
-interface LoginPageProps {
-  onBack: () => void;
-  onLoginSuccess: () => void;
-}
-
-export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess }) => {
+export const LoginPage = ({ onBack, onLoginSuccess }) => {
   const { login, loading } = useAuth();
   const { t } = useLanguage();
   
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'operator' | 'doctor'>('operator');
+  const [role, setRole] = useState('operator');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!userId || !password) {
@@ -82,7 +77,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess }) 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
-                <Select value={role} onValueChange={(value: 'operator' | 'doctor') => setRole(value)}>
+                <Select value={role} onValueChange={(value) => setRole(value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
@@ -160,7 +155,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onBack, onLoginSuccess }) 
                   variant="outline"
                   className="w-full justify-start text-left"
                   onClick={() => {
-                    setRole(cred.role as 'operator' | 'doctor');
+                    setRole(cred.role);
                     setUserId(cred.userId);
                     setPassword('demo123');
                   }}

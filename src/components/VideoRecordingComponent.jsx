@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useVideoRecorder } from '../hooks/useVideoRecorder';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,19 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from '@/hooks/use-toast';
 import { Video, Play, Square, Upload, ArrowLeft, Camera, Mic } from 'lucide-react';
 
-interface VideoRecordingComponentProps {
-  onComplete: (videoUrl: string) => void;
-  onBack: () => void;
-}
-
-export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = ({ onComplete, onBack }) => {
+export const VideoRecordingComponent = ({ onComplete, onBack }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { isRecording, isUploading, videoBlob, previewStream, startRecording, stopRecording, uploadVideo, resetRecording } = useVideoRecorder();
   const [recordingTime, setRecordingTime] = useState(0);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const previewRef = useRef<HTMLVideoElement>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const videoRef = useRef(null);
+  const previewRef = useRef(null);
+  const timerRef = useRef(null);
 
   // Set up live preview when stream is available
   useEffect(() => {
@@ -76,7 +71,7 @@ export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = (
     }
     
     try {
-      const videoUrl = await uploadVideo(`case_${Date.now()}`);
+      const videoUrl = await uploadVideo(`case_${Date.now()}`, user.user_id);
       if (videoUrl) {
         onComplete(videoUrl);
       }
@@ -90,7 +85,7 @@ export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = (
     }
   };
 
-  const formatTime = (seconds: number) => {
+  const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;

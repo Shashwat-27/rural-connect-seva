@@ -5,11 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Heart, Users, Clock, Shield, Smartphone, Wifi } from 'lucide-react';
 
-interface HomePageProps {
-  onLoginClick: () => void;
-}
-
-export const HomePage: React.FC<HomePageProps> = ({ onLoginClick }) => {
+export const HomePage = ({ onLoginClick }) => {
   const { t } = useLanguage();
 
   const features = [

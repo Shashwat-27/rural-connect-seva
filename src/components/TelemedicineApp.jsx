@@ -7,29 +7,9 @@ import { PatientRegistrationForm } from './PatientRegistrationForm';
 import { VitalsEntryForm } from './VitalsEntryForm';
 import { SymptomsForm } from './SymptomsForm';
 
-type Step = 'registration' | 'vitals' | 'symptoms';
-
-interface FormData {
-  patientInfo: {
-    name: string;
-    age: string;
-    gender: string;
-    address: string;
-    phone: string;
-  };
-  vitals: {
-    bloodPressureSystolic: string;
-    bloodPressureDiastolic: string;
-    bloodSugar: string;
-    temperature: string;
-    oxygen: string;
-  };
-  symptoms: string[];
-}
-
-const TelemedicineAppContent: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState<Step>('registration');
-  const [formData, setFormData] = useState<FormData>({
+const TelemedicineAppContent = () => {
+  const [currentStep, setCurrentStep] = useState('registration');
+  const [formData, setFormData] = useState({
     patientInfo: {
       name: '',
       age: '',
@@ -49,15 +29,15 @@ const TelemedicineAppContent: React.FC = () => {
 
   const { saveFormData } = useOfflineSync();
 
-  const handlePatientInfoUpdate = (data: FormData['patientInfo']) => {
+  const handlePatientInfoUpdate = (data) => {
     setFormData(prev => ({ ...prev, patientInfo: data }));
   };
 
-  const handleVitalsUpdate = (data: FormData['vitals']) => {
+  const handleVitalsUpdate = (data) => {
     setFormData(prev => ({ ...prev, vitals: data }));
   };
 
-  const handleSymptomsUpdate = (data: string[]) => {
+  const handleSymptomsUpdate = (data) => {
     setFormData(prev => ({ ...prev, symptoms: data }));
   };
 
@@ -168,7 +148,7 @@ const TelemedicineAppContent: React.FC = () => {
   );
 };
 
-export const TelemedicineApp: React.FC = () => {
+export const TelemedicineApp = () => {
   return (
     <LanguageProvider>
       <TelemedicineAppContent />

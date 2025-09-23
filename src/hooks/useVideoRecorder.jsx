@@ -4,10 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 export const useVideoRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [videoBlob, setVideoBlob] = useState<Blob | null>(null);
-  const [previewStream, setPreviewStream] = useState<MediaStream | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const [videoBlob, setVideoBlob] = useState(null);
+  const [previewStream, setPreviewStream] = useState(null);
+  const mediaRecorderRef = useRef(null);
+  const streamRef = useRef(null);
 
   const startRecording = async () => {
     try {
@@ -22,7 +22,7 @@ export const useVideoRecorder = () => {
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
 
-      const chunks: Blob[] = [];
+      const chunks = [];
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -54,21 +54,20 @@ export const useVideoRecorder = () => {
     }
   };
 
-  const uploadVideo = async (caseId: string): Promise<string | null> => {
+  const uploadVideo = async (caseId, userId) => {
     if (!videoBlob) return null;
 
     try {
       setIsUploading(true);
       
-      // Check authentication
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // Check if user is provided (custom auth)
+      if (!userId) {
         throw new Error('User not authenticated');
       }
       
       const fileName = `case_${caseId}_${Date.now()}.webm`;
       
-      // Upload to Supabase Storage with authenticated user
+      // Upload to Supabase Storage using service role for custom auth
       const { data, error } = await supabase.storage
         .from('medical-videos')
         .upload(fileName, videoBlob, {

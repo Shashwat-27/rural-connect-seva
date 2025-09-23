@@ -1,22 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-interface User {
-  id: string;
-  user_id: string;
-  role: 'operator' | 'doctor' | 'admin';
-  name: string;
-  isAuthenticated: boolean;
-}
-
-interface AuthContextType {
-  user: User | null;
-  login: (userId: string, password: string, role: 'operator' | 'doctor') => Promise<boolean>;
-  logout: () => void;
-  loading: boolean;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -26,8 +11,8 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,7 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(false);
   }, []);
 
-  const login = async (userId: string, password: string, role: 'operator' | 'doctor'): Promise<boolean> => {
+  const login = async (userId, password, role) => {
     try {
       setLoading(true);
       
@@ -61,8 +46,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // For demo purposes, we'll use simple comparison
       if (password === 'demo123') {
         // Get user details from appropriate table
-        let userData: any = null;
-        let userError: any = null;
+        let userData = null;
+        let userError = null;
 
         if (role === 'operator') {
           const { data, error } = await supabase
@@ -87,7 +72,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return false;
         }
 
-        const authenticatedUser: User = {
+        const authenticatedUser = {
           id: userData.id,
           user_id: userId,
           role: role,
