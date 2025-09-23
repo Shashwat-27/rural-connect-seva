@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useVideoRecorder } from '../hooks/useVideoRecorder';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
@@ -13,6 +14,7 @@ interface VideoRecordingComponentProps {
 
 export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = ({ onComplete, onBack }) => {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const { isRecording, isUploading, videoBlob, previewStream, startRecording, stopRecording, uploadVideo, resetRecording } = useVideoRecorder();
   const [recordingTime, setRecordingTime] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -37,13 +39,13 @@ export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = (
       }, 1000);
 
       toast({
-        title: "Recording Started",
-        description: "Please describe your symptoms to the camera",
+        title: t.recordingStarted,
+        description: t.recordingStartedDesc,
       });
     } catch (error) {
       toast({
-        title: "Recording Failed",
-        description: "Please check camera permissions and try again",
+        title: t.recordingFailed,
+        description: t.recordingFailedDesc,
         variant: "destructive",
       });
     }
@@ -57,21 +59,31 @@ export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = (
     }
     
     toast({
-      title: "Recording Stopped",
-      description: "You can now preview or upload your video",
+      title: t.recordingStopped,
+      description: t.recordingStoppedDesc,
     });
   };
 
   const handleUpload = async () => {
+    if (!user) {
+      toast({
+        title: t.error,
+        description: "Please login to upload video",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       const videoUrl = await uploadVideo(`case_${Date.now()}`);
       if (videoUrl) {
         onComplete(videoUrl);
       }
     } catch (error) {
+      console.error('Video upload error:', error);
       toast({
-        title: "Upload Failed",
-        description: "Please try recording again",
+        title: t.uploadFailed,
+        description: t.uploadFailedDesc,
         variant: "destructive",
       });
     }
@@ -89,10 +101,10 @@ export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = (
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Video className="h-5 w-5 text-blue-600" />
-            Video Consultation Required
+            {t.videoConsultation}
           </CardTitle>
           <CardDescription>
-            Your condition requires a video consultation with a doctor. Please record a 2-3 minute video describing your symptoms in detail.
+            {t.videoConsultationDesc}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -100,21 +112,21 @@ export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = (
       {/* Recording Instructions */}
       <Card className="bg-blue-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="text-lg text-blue-800">Recording Instructions</CardTitle>
+          <CardTitle className="text-lg text-blue-800">{t.recordingInstructions}</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2 text-blue-700">
             <li className="flex items-center gap-2">
               <Camera className="h-4 w-4" />
-              Position yourself clearly in front of the camera
+              {t.positionCamera}
             </li>
             <li className="flex items-center gap-2">
               <Mic className="h-4 w-4" />
-              Speak clearly about your symptoms and concerns
+              {t.speakClearly}
             </li>
             <li className="flex items-center gap-2">
               <Video className="h-4 w-4" />
-              Keep the video between 2-3 minutes
+              {t.keepVideo}
             </li>
           </ul>
         </CardContent>
@@ -144,7 +156,7 @@ export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = (
               ) : (
                 <div className="text-white text-center">
                   <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p className="opacity-75">Camera preview will appear here</p>
+                  <p className="opacity-75">{t.cameraPreview}</p>
                 </div>
               )}
               
@@ -166,7 +178,7 @@ export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = (
                   size="lg"
                 >
                   <Play className="h-5 w-5 mr-2" />
-                  Start Recording
+                  {t.startRecording}
                 </Button>
               )}
 
@@ -177,7 +189,7 @@ export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = (
                   size="lg"
                 >
                   <Square className="h-5 w-5 mr-2" />
-                  Stop Recording
+                  {t.stopRecording}
                 </Button>
               )}
 
@@ -187,14 +199,14 @@ export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = (
                     onClick={resetRecording}
                     variant="outline"
                   >
-                    Record Again
+                    {t.recordAgain}
                   </Button>
                   <Button
                     onClick={handleUpload}
                     className="bg-green-600 hover:bg-green-700 text-white"
                   >
                     <Upload className="h-5 w-5 mr-2" />
-                    Send to Doctor
+                    {t.sendToDoctor}
                   </Button>
                 </div>
               )}
@@ -202,7 +214,7 @@ export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = (
               {isUploading && (
                 <Button disabled className="bg-blue-600">
                   <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                  Uploading Video...
+                  {t.uploadingVideo}
                 </Button>
               )}
             </div>
@@ -214,7 +226,7 @@ export const VideoRecordingComponent: React.FC<VideoRecordingComponentProps> = (
       <div className="flex justify-between">
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Symptoms
+          {t.backToSymptoms}
         </Button>
       </div>
     </div>
